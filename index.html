@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YacX.AI | المستقبل بين يديك</title>
+    <style>
+        :root {
+            --bg: #05070a;
+            --accent: #38bdf8;
+            --secondary: #818cf8;
+            --glass: rgba(255, 255, 255, 0.05);
+            --text: #f1f5f9;
+            --glow: rgba(56, 189, 248, 0.3);
+            --radius: 20px;
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%; width: 100%;
+            background: var(--bg); color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+
+        /* --- شاشة الترحيب (Intro) --- */
+        #intro-screen {
+            position: fixed; inset: 0; z-index: 1000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: radial-gradient(circle at center, #1e293b 0%, #05070a 100%);
+            transition: transform 0.8s cubic-bezier(0.87, 0, 0.13, 1);
+        }
+
+        .welcome-text {
+            font-size: 3.5rem; font-weight: bold;
+            background: linear-gradient(to right, var(--accent), var(--secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            opacity: 0; transform: translateY(30px);
+            animation: fadeInUp 1s forwards 0.5s;
+        }
+
+        .ig-tag {
+            margin-top: 10px; font-size: 1.1rem; color: var(--secondary);
+            opacity: 0; animation: fadeIn 1s forwards 1s;
+            letter-spacing: 1px; font-weight: 500;
+        }
+
+        .features {
+            display: flex; gap: 20px; margin: 40px 0;
+            opacity: 0; animation: fadeIn 1.5s forwards 1.2s;
+        }
+
+        .feature-card {
+            background: var(--glass); padding: 15px 25px;
+            border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);
+            text-align: center; font-size: 0.9rem;
+        }
+
+        .next-btn {
+            padding: 15px 50px; border-radius: 30px; border: none;
+            background: var(--accent); color: #000; font-weight: bold;
+            cursor: pointer; transition: 0.3s; opacity: 0;
+            animation: fadeInUp 1s forwards 1.8s;
+        }
+
+        .next-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent); }
+
+        /* --- واجهة الشات الرئيسية --- */
+        #main-chat {
+            display: grid; grid-template-rows: auto 1fr auto;
+            height: 100vh; visibility: hidden;
+        }
+
+        header {
+            padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+        }
+
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+
+        .settings-container { position: relative; }
+        .settings-icon { cursor: pointer; transition: 0.4s; color: var(--text); display: block; }
+        .settings-icon:hover { transform: rotate(90deg); color: var(--accent); }
+
+        #settings-menu {
+            position: absolute; top: 50px; right: 0;
+            background: #0f172a; min-width: 220px; padding: 15px; border-radius: 15px;
+            border: 1px solid var(--accent); display: none; flex-direction: column; gap: 10px; z-index: 500;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            animation: menuFade 0.3s ease;
+        }
+
+        .menu-item {
+            padding: 12px; background: var(--glass); border-radius: 8px; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        .menu-item:hover { background: rgba(255,255,255,0.15); border-right: 3px solid var(--accent); }
+
+        .sub-menu { display: none; flex-wrap: wrap; gap: 10px; margin-top: 5px; padding: 10px; border-top: 1px solid #334155; justify-content: center; }
+
+        .theme-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); cursor: pointer; transition: 0.2s; }
+        .theme-dot:hover { transform: scale(1.2); border-color: white; }
+
+        /* --- شباك الشات --- */
+        #chat-window { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+
+        .msg {
+            max-width: 80%; padding: 15px 20px; border-radius: var(--radius);
+            font-size: 1rem; line-height: 1.6; animation: msgSlide 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            box-shadow: 0 4px 15px var(--glow); transition: all 0.3s;
+        }
+
+        .user { align-self: flex-start; background: var(--accent); color: #000; border-bottom-right-radius: 4px; }
+        .bot { align-self: flex-end; background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
+
+        /* الأنماط (Styles) */
+        body.style-sharp .msg { --radius: 0px; }
+        body.style-bubble .msg { --radius: 30px; }
+        
+        body.style-neon .msg { 
+            border: 2px solid var(--accent); 
+            background: rgba(255, 255, 255, 0.03); 
+            color: #ffffff !important; 
+            text-shadow: 0 0 5px var(--glow);
+            box-shadow: 0 0 15px var(--glow); 
+        }
+        body.style-neon .user { background: transparent; border-color: var(--accent); color: var(--accent) !important; }
+        body.style-neon .bot { background: transparent; border-color: rgba(255,255,255,0.2); }
+
+        .typing {
+            display: flex; gap: 5px; padding: 15px 20px; background: var(--glass);
+            border-radius: 20px; align-self: flex-end; display: none; margin-bottom: 10px;
+        }
+        .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        .input-container { padding: 20px; background: #0a0e14; display: flex; gap: 12px; border-top: 1px solid rgba(255,255,255,0.05); }
+        input { flex: 1; background: var(--glass); border: 1px solid #334155; color: white; padding: 15px; border-radius: 12px; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 10px var(--glow); }
+
+        @keyframes menuFade { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes msgSlide { from { opacity: 0; transform: scale(0.8) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    </style>
+</head>
+<body class="style-modern">
+
+    <div id="intro-screen">
+        <div class="welcome-text">أهلاً بك في YacX.AI</div>
+        <div class="ig-tag">IG: yacx.ai</div>
+        <div class="features">
+            <div class="feature-card">⚡ سرعة فائقة</div>
+            <div class="feature-card">🧠 تفكير عميق</div>
+            <div class="feature-card">🔒 خصوصية تامة</div>
+        </div>
+        <button class="next-btn" onclick="startChat()">ابدأ التجربة</button>
+    </div>
+
+    <div id="main-chat">
+        <header>
+            <div class="settings-container">
+                <div class="settings-icon" onclick="toggleMenu('settings-menu')">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </div>
+                <div id="settings-menu">
+                    <div class="menu-item" onclick="toggleSub('colors-sub')">🎨 اختيار الألوان <span>◀</span></div>
+                    <div id="colors-sub" class="sub-menu">
+                        <div class="theme-dot" style="background:#38bdf8" onclick="changeTheme('#38bdf8', 'rgba(56,189,248,0.3)')"></div>
+                        <div class="theme-dot" style="background:#a855f7" onclick="changeTheme('#a855f7', 'rgba(168,85,247,0.3)')"></div>
+                        <div class="theme-dot" style="background:#22c55e" onclick="changeTheme('#22c55e', 'rgba(34,197,94,0.3)')"></div>
+                        <div class="theme-dot" style="background:#f59e0b" onclick="changeTheme('#f59e0b', 'rgba(245,158,11,0.3)')"></div>
+                        <div class="theme-dot" style="background:#ef4444" onclick="changeTheme('#ef4444', 'rgba(239,68,68,0.3)')"></div>
+                    </div>
+                    
+                    <div class="menu-item" onclick="toggleSub('styles-sub')">📐 أنماط الرسائل <span>◀</span></div>
+                    <div id="styles-sub" class="sub-menu">
+                        <div class="menu-item" style="width:100%" onclick="changeStyle('modern')">عصري</div>
+                        <div class="menu-item" style="width:100%" onclick="changeStyle('bubble')">فقاعات</div>
+                        <div class="menu-item" style="width:100%" onclick="changeStyle('sharp')">حواف حادة</div>
+                        <div class="menu-item" style="width:100%" onclick="changeStyle('neon')">نيون مضيء</div>
+                    </div>
+                </div>
+            </div>
+            <div class="logo">YacX.AI</div>
+            <div style="width:28px"></div>
+        </header>
+
+        <div id="chat-window">
+            <div class="msg bot">مرحباً! كيف يمكن ل YacX مساعدتك ؟.</div>
+        </div>
+
+        <div id="thinking" class="typing">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="اسأل YacX أي شيء..." autocomplete="off">
+            <button class="next-btn" style="padding: 10px 25px; animation: none; opacity: 1;" onclick="send()">إرسال</button>
+        </div>
+    </div>
+
+    <script>
+        // --- ⚙️ إعدادات الرابط (تعديل هذا الرابط بعد رفع السيرفر) ---
+        // استبدل الرابط أدناه بالرابط الذي يعطيك إياه Render
+        const RENDER_SERVER_URL = 'https://yacx-ai.onrender.com'; 
+
+        function startChat() {
+            document.getElementById('intro-screen').style.transform = 'translateY(-100%)';
+            setTimeout(() => { document.getElementById('main-chat').style.visibility = 'visible'; }, 500);
+        }
+
+        function toggleMenu(id) {
+            const menu = document.getElementById(id);
+            const isOpen = menu.style.display === 'flex';
+            menu.style.display = isOpen ? 'none' : 'flex';
+            if(isOpen) {
+                document.getElementById('colors-sub').style.display = 'none';
+                document.getElementById('styles-sub').style.display = 'none';
+            }
+        }
+
+        function toggleSub(id) {
+            const el = document.getElementById(id);
+            const isFlex = el.style.display === 'flex';
+            el.style.display = isFlex ? 'none' : 'flex';
+        }
+
+        function changeTheme(color, glow) {
+            document.documentElement.style.setProperty('--accent', color);
+            document.documentElement.style.setProperty('--glow', glow);
+        }
+
+        function changeStyle(style) {
+            document.body.className = 'style-' + style;
+        }
+
+        async function send() {
+            const input = document.getElementById('userInput');
+            const chatWindow = document.getElementById('chat-window');
+            const thinking = document.getElementById('thinking');
+            const text = input.value.trim();
+            if (!text) return;
+
+            appendMessage('user', text);
+            input.value = '';
+            thinking.style.display = 'flex';
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            try {
+                // استخدام متغير الرابط المعدل ليتناسب مع ريندر
+                const res = await fetch(`${RENDER_SERVER_URL}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await res.json();
+                thinking.style.display = 'none';
+                appendMessage('bot', data.reply);
+            } catch (e) {
+                thinking.style.display = 'none';
+                appendMessage('bot', "❌ عذراً، السيرفر نائم أو الرابط غير صحيح.");
+            }
+        }
+
+        function appendMessage(role, text) {
+            const div = document.createElement('div');
+            div.className = `msg ${role}`;
+            div.innerText = text;
+            document.getElementById('chat-window').appendChild(div);
+            document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
+        }
+
+        document.getElementById('userInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') send(); });
+
+        window.onclick = function(event) {
+            if (!event.target.closest('.settings-container')) {
+                document.getElementById('settings-menu').style.display = 'none';
+                document.getElementById('colors-sub').style.display = 'none';
+                document.getElementById('styles-sub').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
