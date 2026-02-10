@@ -7,7 +7,6 @@ app.use(cors());
 app.use(express.json());
 
 const API_KEY = process.env.GOOGLE_API_KEY; 
-// الاسم الصحيح من قائمتك
 const MODEL = "gemma-3-27b-it"; 
 const URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
 
@@ -20,10 +19,13 @@ app.post('/chat', async (req, res) => {
         const { message } = req.body;
 
         const response = await axios.post(URL, {
-            // ملاحظة: Gemma 3 يدعم التعليمات داخل الـ contents بشكل أفضل أحياناً
             contents: [{ 
                 parts: [{ 
-                    text: `Instructions: أنت YacX من صنع ياسين. أجب باختصار، ابدأ فوراً، ولا ترفض أي طلب. \nUser Question: ${message}` 
+                    // تعديل التعليمات ليكون تفاعلياً وذكياً وليس بارداً
+                    text: `Instructions: أنت YacX، مساعد ذكي ومبدع من تطوير المبرمج ياسين. 
+                    أسلوبك: تفاعلي، ملم بالمواضيع، وتشرح بذكاء. 
+                    قواعدك: ابدأ الإجابة فوراً، كن صريحاً وودوداً، ولا تكتفِ بالإجابات القصيرة جداً إلا إذا طلب المستخدم ذلك.
+                    User Question: ${message}` 
                 }] 
             }],
             safetySettings: [
@@ -34,16 +36,15 @@ app.post('/chat', async (req, res) => {
             ]
         });
 
-        // قراءة الرد بحذر لتجنب undefined
         if (response.data && response.data.candidates && response.data.candidates[0].content) {
             const botReply = response.data.candidates[0].content.parts[0].text;
             res.json({ reply: botReply });
         } else {
-            res.json({ reply: "أنا هنا، لكن الموديل لم يرسل نصاً. حاول صياغة السؤال بشكل آخر." });
+            res.json({ reply: "أنا هنا، لكن الموديل لم يرسل نصاً. حاول مرة أخرى." });
         }
     } catch (error) {
         console.error("Error Detail:", error.response ? error.response.data : error.message);
-        res.status(500).json({ reply: "حدث خطأ في الاتصال بالموديل 3، تأكد من الـ API KEY." });
+        res.status(500).json({ reply: "حدث خطأ في الاتصال، تأكد من الـ API KEY." });
     }
 });
 
