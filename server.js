@@ -7,7 +7,7 @@ app.use(cors());
 app.use(express.json());
 
 const API_KEY = process.env.GOOGLE_API_KEY; 
-const MODEL = "gemma-3-27b-it"; 
+const MODEL = "gemma2-27b-it"; 
 const URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
 
 app.get('/ping', (req, res) => {
