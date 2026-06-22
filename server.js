@@ -6,9 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// قراءة مفتاح OpenRouter الجديد الذي قمت بحفظه في الـ Environment لـ Render
 const API_KEY = process.env.OPENROUTER_API_KEY; 
-// استخدام موديل Cohere المجاني والسريع عبر OpenRouter
 const MODEL = "cohere/north-mini-code:free"; 
 const URL = `https://openrouter.ai/api/v1/chat/completions`;
 
@@ -20,7 +18,11 @@ app.post('/chat', async (req, res) => {
     try {
         const { message } = req.body;
 
-        // إرسال الطلب العادي (بدون تفعيل الـ stream) ليتوافق تماماً مع واجهتك الحالية
+        // تهيئة الـ Headers للبث الحي
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
         const response = await axios.post(URL, {
             model: MODEL,
             messages: [
@@ -32,28 +34,29 @@ app.post('/chat', async (req, res) => {
                     2. إذا سألك المستخدم "من هو مطورك؟" أو "من صنعك؟"، أخبره فقط أنك من تطوير المبرمج ياسين، دون ذكر أي تفاصيل شخصية أخرى كالعمر، تاريخ الميلاد، أو مكان السكن لحماية الخصوصية.
                     3. كن تفاعلياً وذكياً في الشرح، ولا تكتفِ بالإجابات الجافة.`
                 },
-                {
-                    role: "user",
-                    content: message
-                }
-            ]
+                { role: "user", content: message }
+            ],
+            stream: true // تفعيل البث من OpenRouter
         }, {
             headers: {
                 "Authorization": `Bearer ${API_KEY}`,
                 "Content-Type": "application/json"
-            }
+            },
+            responseType: 'stream'
         });
 
-        // قراءة الرد القياسي القادم من OpenRouter
-        if (response.data && response.data.choices && response.data.choices[0].message) {
-            const botReply = response.data.choices[0].message.content;
-            res.json({ reply: botReply });
-        } else {
-            res.json({ reply: "أنا هنا، لكن الموديل لم يرسل نصاً. حاول مرة أخرى." });
-        }
+        response.data.on('data', (chunk) => {
+            res.write(chunk);
+        });
+
+        response.data.on('end', () => {
+            res.end();
+        });
+
     } catch (error) {
-        console.error("Error Detail:", error.response ? error.response.data : error.message);
-        res.status(500).json({ reply: "حدث خطأ في الاتصال، تأكد من الـ API KEY." });
+        console.error("Stream Error:", error.message);
+        res.write('data: {"error": "حدث خطأ في الاتصال"}\n\n');
+        res.end();
     }
 });
 
