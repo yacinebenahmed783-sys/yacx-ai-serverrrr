@@ -6,9 +6,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const API_KEY = process.env.GOOGLE_API_KEY; 
-const MODEL = "gemini-2.0-flash"; 
-const URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+// قراءة مفتاح OpenRouter الجديد الذي قمت بحفظه في الـ Environment لـ Render
+const API_KEY = process.env.OPENROUTER_API_KEY; 
+// استخدام موديل Llama 3 المجاني والسريع عبر OpenRouter
+const MODEL = "meta-llama/llama-3-8b-instruct:free"; 
+const URL = `https://openrouter.ai/api/v1/chat/completions`;
 
 app.get('/ping', (req, res) => {
     res.status(200).send('Server is Awake!');
@@ -18,27 +20,33 @@ app.post('/chat', async (req, res) => {
     try {
         const { message } = req.body;
 
+        // إرسال الطلب بتنسيق OpenRouter القياسي مع الحفاظ التام على تعليماتك السابقة
         const response = await axios.post(URL, {
-            contents: [{ 
-                parts: [{ 
-                    text: `Instructions: أنت YacX، مساعد ذكي من تطوير ياسين.
+            model: MODEL,
+            messages: [
+                {
+                    role: "system",
+                    content: `Instructions: أنت YacX، مساعد ذكي من تطوير ياسين.
                     قواعد الرد:
                     1. إذا قال المستخدم "مرحباً" أو "أهلاً"، رد بترحيب طبيعي وودود ولا تذكر معلومات المطور فوراً.
                     2. إذا سألك المستخدم "من هو مطورك؟" أو "من صنعك؟"، أخبره فقط أنك من تطوير المبرمج ياسين، دون ذكر أي تفاصيل شخصية أخرى كالعمر، تاريخ الميلاد، أو مكان السكن لحماية الخصوصية.
-                    3. كن تفاعلياً وذكياً في الشرح، ولا تكتفِ بالإجابات الجافة.
-                    User Question: ${message}` 
-                }] 
-            }],
-            safetySettings: [
-                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                    3. كن تفاعلياً وذكياً في الشرح، ولا تكتفِ بالإجابات الجافة.`
+                },
+                {
+                    role: "user",
+                    content: message
+                }
             ]
+        }, {
+            headers: {
+                "Authorization": `Bearer ${API_KEY}`,
+                "Content-Type": "application/json"
+            }
         });
 
-        if (response.data && response.data.candidates && response.data.candidates[0].content) {
-            const botReply = response.data.candidates[0].content.parts[0].text;
+        // قراءة الرد القادم من هيكلية بيانات OpenRouter
+        if (response.data && response.data.choices && response.data.choices[0].message) {
+            const botReply = response.data.choices[0].message.content;
             res.json({ reply: botReply });
         } else {
             res.json({ reply: "أنا هنا، لكن الموديل لم يرسل نصاً. حاول مرة أخرى." });
