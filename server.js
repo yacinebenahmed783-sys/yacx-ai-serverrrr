@@ -8,7 +8,7 @@ app.use(express.json());
 
 // قراءة مفتاح OpenRouter الجديد الذي قمت بحفظه في الـ Environment لـ Render
 const API_KEY = process.env.OPENROUTER_API_KEY; 
-// استخدام موديل Llama 3 المجاني والسريع عبر OpenRouter
+// استخدام موديل Cohere المجاني والسريع عبر OpenRouter
 const MODEL = "cohere/north-mini-code:free"; 
 const URL = `https://openrouter.ai/api/v1/chat/completions`;
 
@@ -20,12 +20,7 @@ app.post('/chat', async (req, res) => {
     try {
         const { message } = req.body;
 
-        // تهيئة الـ Headers الخاصة بالبث الحي (SSE) لإجبار المتصفح على استقبال البيانات فوراً
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-
-        // إرسال الطلب بتنسيق OpenRouter مع تفعيل الخاصية stream: true
+        // إرسال الطلب العادي (بدون تفعيل الـ stream) ليتوافق تماماً مع واجهتك الحالية
         const response = await axios.post(URL, {
             model: MODEL,
             messages: [
@@ -41,31 +36,24 @@ app.post('/chat', async (req, res) => {
                     role: "user",
                     content: message
                 }
-            ],
-            stream: true // تفعيل البث الحي من جهة OpenRouter
+            ]
         }, {
             headers: {
                 "Authorization": `Bearer ${API_KEY}`,
                 "Content-Type": "application/json"
-            },
-            responseType: 'stream' // استقبال الرد كـ Stream تدفقي وليس حزمة واحدة
+            }
         });
 
-        // تمرير البيانات القادمة من OpenRouter مباشرة إلى المتصفح قطعة قطعة (Chunk)
-        response.data.on('data', (chunk) => {
-            res.write(chunk);
-        });
-
-        // إنهاء الاتصال فور اكتمال توليد النص بالكامل
-        response.data.on('end', () => {
-            res.end();
-        });
-
+        // قراءة الرد القياسي القادم من OpenRouter
+        if (response.data && response.data.choices && response.data.choices[0].message) {
+            const botReply = response.data.choices[0].message.content;
+            res.json({ reply: botReply });
+        } else {
+            res.json({ reply: "أنا هنا، لكن الموديل لم يرسل نصاً. حاول مرة أخرى." });
+        }
     } catch (error) {
-        console.error("Stream Error:", error.message);
-        // في حال حدوث خطأ، يتم إرسال رسالة خطأ متوافقة مع صيغة البث
-        res.write('data: {"error": "حدث خطأ في الاتصال، تأكد من الـ API KEY."}\n\n');
-        res.end();
+        console.error("Error Detail:", error.response ? error.response.data : error.message);
+        res.status(500).json({ reply: "حدث خطأ في الاتصال، تأكد من الـ API KEY." });
     }
 });
 
