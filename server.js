@@ -9,7 +9,7 @@ app.use(express.json());
 // قراءة مفتاح OpenRouter الجديد الذي قمت بحفظه في الـ Environment لـ Render
 const API_KEY = process.env.OPENROUTER_API_KEY; 
 // استخدام موديل Llama 3 المجاني والسريع عبر OpenRouter
-const MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"; 
+const MODEL = "cohere/north-mini-code:free"; 
 const URL = `https://openrouter.ai/api/v1/chat/completions`;
 
 app.get('/ping', (req, res) => {
