@@ -10,6 +10,10 @@ const API_KEY = process.env.OPENROUTER_API_KEY;
 const MODEL = "cohere/north-mini-code:free"; 
 const URL = `https://openrouter.ai/api/v1/chat/completions`;
 
+// إعدادات Fish Audio
+const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-eCVCw5WT8B46HI-BHnczQMd7oT7GNUK4wsxw0B8hR1Q';
+const FISH_MODEL_ID = '7409fcf04906472db14cb0dd5a50ccb0';
+
 app.get('/ping', (req, res) => {
     res.status(200).send('Server is Awake!');
 });
@@ -60,21 +64,38 @@ app.post('/chat', async (req, res) => {
     }
 });
 
-// مسار الـ TTS الخفيف والمستقر لتوليد الصوت الحقيقي
+// مسار الـ TTS الحقيقي المربوط مع Fish Audio
 app.post("/api/tts", async (req, res) => {
     try {
-        const { text, voice } = req.body;
+        const { text } = req.body;
         if (!text) return res.status(400).json({ error: "النص مطلوب" });
 
-        // توجيه النص بسلاسة أو جلبه عبر الـ API السحابي المباشر
-        res.json({ 
-            success: true, 
-            message: "جاهز للتوليد الصوتي",
-            textToSynthesize: text,
-            selectedVoice: voice || "ar-SA-ZariyahNeural"
+        // إرسال الطلب لـ Fish Audio API باستخدام صوتك المخصص
+        const response = await axios({
+            method: 'post',
+            url: 'https://api.fish.audio/v1/tts',
+            headers: {
+                'Authorization': `Bearer ${FISH_API_KEY}`,
+                'Content-Type': 'application/json',
+                'model': 's2.1-pro-free'
+            },
+            data: {
+                text: text,
+                reference_id: FISH_MODEL_ID
+            },
+            responseType: 'arraybuffer'
         });
+
+        // إرجاع الملف الصوتي (MP3) للواجهة مباشرة
+        res.set({
+            'Content-Type': 'audio/mpeg',
+            'Transfer-Encoding': 'chunked'
+        });
+        res.send(response.data);
+
     } catch (error) {
-        res.status(500).json({ error: "خطأ في السيرفر" });
+        console.error("TTS Error:", error.response?.data ? Buffer.from(error.response.data).toString() : error.message);
+        res.status(500).json({ error: "حدث خطأ أثناء توليد الصوت" });
     }
 });
 
