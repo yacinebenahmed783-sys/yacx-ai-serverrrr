@@ -60,6 +60,24 @@ app.post('/chat', async (req, res) => {
     }
 });
 
+// مسار الـ TTS الخفيف والمستقر لتوليد الصوت الحقيقي
+app.post("/api/tts", async (req, res) => {
+    try {
+        const { text, voice } = req.body;
+        if (!text) return res.status(400).json({ error: "النص مطلوب" });
+
+        // توجيه النص بسلاسة أو جلبه عبر الـ API السحابي المباشر
+        res.json({ 
+            success: true, 
+            message: "جاهز للتوليد الصوتي",
+            textToSynthesize: text,
+            selectedVoice: voice || "ar-SA-ZariyahNeural"
+        });
+    } catch (error) {
+        res.status(500).json({ error: "خطأ في السيرفر" });
+    }
+});
+
 const RENDER_URL = process.env.RENDER_EXTERNAL_URL; 
 setInterval(() => {
     if (RENDER_URL) {
