@@ -71,7 +71,7 @@ app.post('/chat', async (req, res) => {
     }
 });
 
-// مسار الـ TTS المدعوم بالكامل لكافة الأصوات
+// مسار الـ TTS المدعوم بالمعلمات الطبيعية لضمان كلام اعتيادي وغير مبالغ فيه
 app.post("/api/tts", async (req, res) => {
     try {
         const { text, voice_id } = req.body;
@@ -95,7 +95,9 @@ app.post("/api/tts", async (req, res) => {
             },
             data: {
                 text: text,
-                reference_id: targetVoiceId
+                reference_id: targetVoiceId,
+                normalize: true,       // ضبط إيقاع القراءة ليصبح طبيعياً ومنتظماً
+                latency: 'normal'      // الأداء القياسي العادي المطابق لموقعهم
             },
             responseType: 'arraybuffer'
         });
