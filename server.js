@@ -13,12 +13,12 @@ const URL = `https://openrouter.ai/api/v1/chat/completions`;
 // إعدادات Fish Audio وقائمة معرفات الأصوات المعتمدة
 const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-eCVCw5WT8B46HI-BHnczQMd7oT7GNUK4wsxw0B8hR1Q';
 
-// قاموس الأصوات لضمان عملها بشكل مضمون 100%
+// قاموس الأصوات مع تصحيح معرف صوت "احححح" بالكامل
 const VOICE_MAP = {
     'personal': '7409fcf04906472db14cb0dd5a50ccb0', // صوتك الشخصي الأساسي
     'miku': 'fef2a33d77584832badf637d5e6b00c5',     // صوت ميكو
     'mommy': '5233336f5f44460ea0902b0802375451',    // mommy
-    'ahhh': '11413f183cf24e04859607efd14c83',      // احححح
+    'ahhh': '11413f183cf24e04859607efd14c832d',     // احححح (المعرف الصحيح الكامل)
     'child': 'dbb776759f3b40d688ad282a50068d58'     // بنت صغيرة
 };
 
@@ -77,10 +77,8 @@ app.post("/api/tts", async (req, res) => {
         const { text, voice_id } = req.body;
         if (!text) return res.status(400).json({ error: "النص مطلوب" });
 
-        // تحديد المعرف بدقة (سواء أرسل المعرف مباشرة أو قيمة افتراضية لصوتك)
         let targetVoiceId = voice_id;
         
-        // إذا لم يكن المعرف مسجلاً، نتحقق إن كان مطابداً لأحد المفاتيح أو نأخذ الصوت الأساسي
         if (!targetVoiceId) {
             targetVoiceId = VOICE_MAP['personal'];
         }
