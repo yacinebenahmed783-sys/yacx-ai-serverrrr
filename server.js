@@ -20,6 +20,12 @@ const VOICE_MAP = {
     'mommy': '8e4e02d2503b448eb4d6a2efd99c84e3',    // mommy
     'ahhh': '11413f183cf24e04859607efd14c832d',     // احححح (المعرف الصحيح الكامل)
     'child': '1d785d369dbf41589e421f4c72713629'     // بنت صغيرة
+    'daddy': '44924e1147434a479e241309a75470e4',    // daddy
+    'girl': '7eee0787bf1a476fb0864270853e344a',     // girl
+    'memati': 'b8a16ccac9ad4bc78f5f3f5dd46dc6b5',   // ميماتي
+    'aboflah': '7e4fa512aa564e198f8659b466f6ff70',  // ابو فلة
+    'tebboune': '207bf4478cfc456e8823de046272044b', // تبون
+    'gumball': '1d51fdd65ff14342aec4dffa0ef58386'   // غامبول
 };
 
 app.get('/ping', (req, res) => {
