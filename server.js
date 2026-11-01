@@ -17,9 +17,9 @@ const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-eCVCw5WT8B46HI-BHnczQM
 const VOICE_MAP = {
     'personal': '7409fcf04906472db14cb0dd5a50ccb0', // صوتك الشخصي الأساسي
     'miku': 'fef2a33d77584832badf637d5e6b00c5',     // صوت ميكو
-    'mommy': '5233336f5f44460ea0902b0802375451',    // mommy
+    'mommy': '8e4e02d2503b448eb4d6a2efd99c84e3',    // mommy
     'ahhh': '11413f183cf24e04859607efd14c832d',     // احححح (المعرف الصحيح الكامل)
-    'child': 'dbb776759f3b40d688ad282a50068d58'     // بنت صغيرة
+    'child': '1d785d369dbf41589e421f4c72713629'     // بنت صغيرة
 };
 
 app.get('/ping', (req, res) => {
