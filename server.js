@@ -9,7 +9,7 @@ app.use(express.json());
 // مفتاح جوجل الذي أضفته في Render
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY; 
 // رابط الاتصال المباشر بنموذج فلاش السريع من جوجل
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`;
 
 // إعدادات Fish Audio وقائمة معرفات الأصوات الخاصة بك بدقة
 const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-eCVCw5WT8B46HI-BHnczQMd7oT7GNUK4wsxw0B8hR1Q';
