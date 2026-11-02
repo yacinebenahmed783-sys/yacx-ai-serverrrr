@@ -6,10 +6,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// مفتاح Groq (تأكد من إضافته في إعدادات Render باسم GROQ_API_KEY أو استخدم نفس المتغير)
-const GROQ_API_KEY = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY; 
+// مفتاح Groq الذي أضفته في إعدادات Render
+const GROQ_API_KEY = process.env.GROQ_API_KEY; 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
+// مفتاح Fish Audio للصوت
 const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-eCVCw5WT8B46HI-BHnczQMd7oT7GNUK4wsxw0B8hR1Q';
 
 const VOICE_MAP = {
@@ -30,18 +31,18 @@ app.get('/ping', (req, res) => {
     res.status(200).send('Server is Awake!');
 });
 
-// مسار الـ Chat باستخدام Groq السريع جداً
+// مسار الشات المباشر باستخدام Groq السريع جداً
 app.post('/chat', async (req, res) => {
     try {
         const { message } = req.body;
         if (!message) return res.status(400).json({ error: "الرسالة مطلوبة" });
 
         if (!GROQ_API_KEY) {
-            return res.status(500).json({ reply: "مفتاح Groq غير مضاف في إعدادات Render." });
+            return res.status(500).json({ reply: "مفتاح GROQ_API_KEY غير مضاف في إعدادات Render." });
         }
 
         const response = await axios.post(GROQ_URL, {
-            model: "llama-3.1-8b-instant", // نموذج مجاني، ذكي، وسريع جداً على Groq
+            model: "llama-3.1-8b-instant", // نموذج سريع جداً ومجاني على Groq
             messages: [
                 {
                     role: "system",
@@ -72,7 +73,7 @@ app.post('/chat', async (req, res) => {
 // مسار الصوت (TTS)
 app.post("/api/tts", async (req, res) => {
     try {
-        const { text, voice_id } = req.body;
+        const { text, voice_id }  = req.body;
         if (!text) return res.status(400).json({ error: "النص مطلوب" });
 
         let targetVoiceId = voice_id || VOICE_MAP['personal'];
