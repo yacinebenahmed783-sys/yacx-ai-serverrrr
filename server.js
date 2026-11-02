@@ -42,7 +42,7 @@ app.post('/chat', async (req, res) => {
         }
 
         const response = await axios.post(OPENROUTER_URL, {
-           model: "recursive/flint-v1.0:free",
+          model: "google/gemma-2-9b-it:free",
             messages: [
                 {
                     role: "system",
