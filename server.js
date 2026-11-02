@@ -6,53 +6,41 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// مفتاح جوجل الذي أضفته في Render
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY; 
-// رابط الاتصال المباشر بنموذج فلاش السريع من جوجل
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`;
+// استخدام النموذج القياسي المستقر للرد المباشر
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-// إعدادات Fish Audio وقائمة معرفات الأصوات الخاصة بك بدقة
 const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-eCVCw5WT8B46HI-BHnczQMd7oT7GNUK4wsxw0B8hR1Q';
 
-// قاموس الأصوات بالمعرفات التي عدّلتها بنفسك
 const VOICE_MAP = {
-    'personal': '7409fcf04906472db14cb0dd5a50ccb0', // صوتك الشخصي الأساسي
-    'miku': 'fef2a33d77584832badf637d5e6b00c5',     // صوت ميكو
-    'mommy': '8e4e02d2503b448eb4d6a2efd99c84e3',    // mommy
-    'ahhh': '1d785d369dbf41589e421f4c72713629',     // احححح
-    'child': 'dbb776759f3b40d688ad282a50068d58',    // بنت صغيرة
-    'daddy': '44924e1147434a479e241309a75470e4',    // daddy
-    'girl': '7eee0787bf1a476fb0864270853e344a',     // girl
-    'memati': 'b8a16ccac9ad4bc78f5f3f5dd46dc6b5',   // ميماتي
-    'aboflah': '7e4fa512aa564e198f8659b466f6ff70',  // ابو فلة
-    'tebboune': '207bf4478cfc456e8823de046272044b', // تبون
-    'gumball': '1d51fdd65ff14342aec4dffa0ef58386'   // غامبول
+    'personal': '7409fcf04906472db14cb0dd5a50ccb0',
+    'miku': 'fef2a33d77584832badf637d5e6b00c5',
+    'mommy': '8e4e02d2503b448eb4d6a2efd99c84e3',
+    'ahhh': '1d785d369dbf41589e421f4c72713629',
+    'child': 'dbb776759f3b40d688ad282a50068d58',
+    'daddy': '44924e1147434a479e241309a75470e4',
+    'girl': '7eee0787bf1a476fb0864270853e344a',
+    'memati': 'b8a16ccac9ad4bc78f5f3f5dd46dc6b5',
+    'aboflah': '7e4fa512aa564e198f8659b466f6ff70',
+    'tebboune': '207bf4478cfc456e8823de046272044b',
+    'gumball': '1d51fdd65ff14342aec4dffa0ef58386'
 };
 
 app.get('/ping', (req, res) => {
     res.status(200).send('Server is Awake!');
 });
 
-// مسار الـ Chat المنظم والمستقر ليعمل مع نموذج جوجل بكل سلاسة
+// مسار الـ Chat المباشر والواضح (بدون Stream معقد)
 app.post('/chat', async (req, res) => {
     try {
         const { message } = req.body;
+        if (!message) return res.status(400).json({ error: "الرسالة مطلوبة" });
 
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
+        if (!GEMINI_API_KEY) {
+            return res.status(500).json({ reply: "مفتاح جيميناي غير مضاف في إعدادات Render." });
+        }
 
         const response = await axios.post(GEMINI_URL, {
-            system_instruction: {
-                parts: [{
-                    text: `Instructions: أنت YacX، مساعد ذكي ومحترف من تطوير ياسين.
-                    قواعد الرد الصارمة:
-                    1. لغة الرد: رد دائماً وبشكل قطعي بنفس لغة المستخدم (إذا كتب بالعربية رد بالعربية، إذا كتب بالإنجليزية رد بالإنجليزية، إلخ). لا ترد بلغة أخرى أبداً.
-                    2. التنظيم: اجعل إجاباتك منظمة، استخدم النقاط (Bullet points) والعناوين القصيرة لتسهيل القراءة، وكن دقيقاً ومباشراً بدون حشو زائد.
-                    3. إذا قال المستخدم "مرحباً" أو "أهلاً"، رد بترحيب طبيعي وودود بنفس لغته ولا تذكر معلومات المطور فوراً.
-                    4. إذا سألك المستخدم "من هو مطورك؟" أو "من صنعك؟"، أخبره فقط أنك من تطوير المبرمج ياسين، دون ذكر أي تفاصيل شخصية أخرى لحماية الخصوصية.`
-                }]
-            },
             contents: [{
                 role: "user",
                 parts: [{ text: message }]
@@ -60,58 +48,27 @@ app.post('/chat', async (req, res) => {
         }, {
             headers: {
                 "Content-Type": "application/json"
-            },
-            responseType: 'stream'
-        });
-
-        response.data.on('data', (chunk) => {
-            const chunkStr = chunk.toString();
-            const lines = chunkStr.split('\n');
-            for (const line of lines) {
-                const trimmed = line.trim();
-                if (trimmed.startsWith('data:')) {
-                    const jsonStr = trimmed.substring(5).trim();
-                    if (jsonStr && jsonStr !== '[DONE]') {
-                        try {
-                            const parsed = JSON.parse(jsonStr);
-                            const textPart = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-                            if (textPart) {
-                                res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: textPart } }] })}\n\n`);
-                            }
-                        } catch (e) {
-                            // تجاهل الحزم غير الكاملة
-                        }
-                    }
-                }
             }
         });
 
-        response.data.on('end', () => {
-            res.write('data: [DONE]\n\n');
-            res.end();
-        });
+        const replyText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "عذراً، لم أتمكن من الرد.";
+        
+        // إرجاع الرد بصيغة JSON مباشرة وسهلة
+        res.json({ reply: replyText });
 
     } catch (error) {
-        console.error("Gemini Stream Error:", error.response?.data || error.message);
-        res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: "عذراً، حدث خطأ في الاتصال بسيرفر جوجل." } }] })}\n\n`);
-        res.write('data: [DONE]\n\n');
-        res.end();
+        console.error("Gemini Error:", error.response?.data || error.message);
+        res.status(500).json({ reply: "عذراً، حدث خطأ في الاتصال بسيرفر جوجل." });
     }
 });
 
-// مسار الـ TTS المدعوم بكافة أصواتك
+// مسار الصوت (TTS)
 app.post("/api/tts", async (req, res) => {
     try {
         const { text, voice_id } = req.body;
         if (!text) return res.status(400).json({ error: "النص مطلوب" });
 
-        let targetVoiceId = voice_id;
-        
-        if (!targetVoiceId) {
-            targetVoiceId = VOICE_MAP['personal'];
-        }
-
-        console.log(`Generating TTS with Voice ID: ${targetVoiceId} for text: ${text}`);
+        let targetVoiceId = voice_id || VOICE_MAP['personal'];
 
         const response = await axios({
             method: 'post',
@@ -139,7 +96,7 @@ app.post("/api/tts", async (req, res) => {
         res.send(response.data);
 
     } catch (error) {
-        console.error("TTS Error:", error.response?.data ? Buffer.from(error.response.data).toString() : error.message);
+        console.error("TTS Error:", error.message);
         res.status(500).json({ error: "حدث خطأ أثناء توليد الصوت" });
     }
 });
