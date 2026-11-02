@@ -6,9 +6,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// مفتاح Groq الذي أضفته في إعدادات Render
-const GROQ_API_KEY = process.env.GROQ_API_KEY; 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+// مفتاح OpenRouter (سنستعمل متغير OPENROUTER_API_KEY أو نفس خانة المفتاح)
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || process.env.GROQ_API_KEY; 
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // مفتاح Fish Audio للصوت
 const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-eCVCw5WT8B46HI-BHnczQMd7oT7GNUK4wsxw0B8hR1Q';
@@ -31,18 +31,18 @@ app.get('/ping', (req, res) => {
     res.status(200).send('Server is Awake!');
 });
 
-// مسار الشات المباشر باستخدام Groq السريع جداً
+// مسار الشات باستخدام OpenRouter ونموذج مجاني مستقر
 app.post('/chat', async (req, res) => {
     try {
         const { message } = req.body;
         if (!message) return res.status(400).json({ error: "الرسالة مطلوبة" });
 
-        if (!GROQ_API_KEY) {
-            return res.status(500).json({ reply: "مفتاح GROQ_API_KEY غير مضاف في إعدادات Render." });
+        if (!OPENROUTER_API_KEY) {
+            return res.status(500).json({ reply: "مفتاح OpenRouter غير مضاف في إعدادات Render." });
         }
 
-        const response = await axios.post(GROQ_URL, {
-            model: "llama-3.1-8b-instant", // تم تحديد النموذج هنا بدقة ليعمل بدون أخطاء
+        const response = await axios.post(OPENROUTER_URL, {
+            model: "meta-llama/llama-3.1-8b-instruct:free", // نموذج مجاني وثابت تماماً على OpenRouter
             messages: [
                 {
                     role: "system",
@@ -52,12 +52,13 @@ app.post('/chat', async (req, res) => {
                     role: "user",
                     content: message
                 }
-            ],
-            temperature: 0.7
+            ]
         }, {
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${GROQ_API_KEY}`
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "HTTP-Referer": "https://yacx-ai.com", // اختياري لـ OpenRouter
+                "X-Title": "YacX.AI"                  // اختياري لـ OpenRouter
             }
         });
 
@@ -65,8 +66,8 @@ app.post('/chat', async (req, res) => {
         res.json({ reply: replyText });
 
     } catch (error) {
-        console.error("Groq Error:", error.response?.data || error.message);
-        res.status(500).json({ reply: "عذراً، حدث خطأ في الاتصال بسيرفر Groq." });
+        console.error("OpenRouter Error:", error.response?.data || error.message);
+        res.status(500).json({ reply: "عذراً، حدث خطأ في الاتصال بسيرفر OpenRouter." });
     }
 });
 
