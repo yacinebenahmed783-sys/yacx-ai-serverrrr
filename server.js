@@ -42,7 +42,7 @@ app.post('/chat', async (req, res) => {
         }
 
         const response = await axios.post(OPENROUTER_URL, {
-            model: "mistralai/mistral-7b-instruct:free", // نموذج مجاني وثابت تماماً على OpenRouter
+           model: "recursive/flint-v1.0:free",
             messages: [
                 {
                     role: "system",
