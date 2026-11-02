@@ -10,16 +10,16 @@ const API_KEY = process.env.OPENROUTER_API_KEY;
 const MODEL = "cohere/north-mini-code:free"; 
 const URL = `https://openrouter.ai/api/v1/chat/completions`;
 
-// إعدادات Fish Audio وقائمة معرفات الأصوات المعتمدة
+// إعدادات Fish Audio وقائمة معرفات الأصوات الخاصة بك بدقة
 const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-eCVCw5WT8B46HI-BHnczQMd7oT7GNUK4wsxw0B8hR1Q';
 
-// قاموس الأصوات مع تصحيح معرف صوت "احححح" بالكامل
+// قاموس الأصوات بالمعرفات التي عدّلتها بنفسك
 const VOICE_MAP = {
     'personal': '7409fcf04906472db14cb0dd5a50ccb0', // صوتك الشخصي الأساسي
     'miku': 'fef2a33d77584832badf637d5e6b00c5',     // صوت ميكو
-    'mommy': '8e4e02d2503b448eb4d6a2efd99c84e3',    // mommy
-    'ahhh': '11413f183cf24e04859607efd14c832d',     // احححح (المعرف الصحيح الكامل)
-    'child': '1d785d369dbf41589e421f4c72713629'     // بنت صغيرة
+    'mommy': '8e4e02d2503b448eb4d6a2efd99c84e3',    // mommy (المعرف الخاص بك)
+    'ahhh': '11413f183cf24e04859607efd14c832d',     // احححح
+    'child': '1d785d369dbf41589e421f4c72713629',    // بنت صغيرة (المعرف الخاص بك)
     'daddy': '44924e1147434a479e241309a75470e4',    // daddy
     'girl': '7eee0787bf1a476fb0864270853e344a',     // girl
     'memati': 'b8a16ccac9ad4bc78f5f3f5dd46dc6b5',   // ميماتي
