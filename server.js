@@ -42,7 +42,7 @@ app.post('/chat', async (req, res) => {
         }
 
         const response = await axios.post(OPENROUTER_URL, {
-            model: "meta-llama/llama-3.1-8b-instruct:free", // نموذج مجاني وثابت تماماً على OpenRouter
+            model: "mistralai/mistral-7b-instruct:free", // نموذج مجاني وثابت تماماً على OpenRouter
             messages: [
                 {
                     role: "system",
