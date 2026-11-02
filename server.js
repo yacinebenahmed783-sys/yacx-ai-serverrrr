@@ -42,7 +42,7 @@ app.post('/chat', async (req, res) => {
         }
 
         const response = await axios.post(GROQ_URL, {
-            model: "llama-3.1-8b-instant", // نموذج سريع جداً ومجاني على Groq
+            model: "llama3-8b-8192", // تم تحديد النموذج هنا بدقة ليعمل بدون أخطاء
             messages: [
                 {
                     role: "system",
@@ -73,7 +73,7 @@ app.post('/chat', async (req, res) => {
 // مسار الصوت (TTS)
 app.post("/api/tts", async (req, res) => {
     try {
-        const { text, voice_id }  = req.body;
+        const { text, voice_id } = req.body;
         if (!text) return res.status(400).json({ error: "النص مطلوب" });
 
         let targetVoiceId = voice_id || VOICE_MAP['personal'];
