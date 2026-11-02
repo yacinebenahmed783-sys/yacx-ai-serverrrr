@@ -42,7 +42,7 @@ app.post('/chat', async (req, res) => {
         }
 
         const response = await axios.post(OPENROUTER_URL, {
-          model: "google/gemma-2-9b-it:free",
+          const MODEL = "cohere/north-mini-code:free";
             messages: [
                 {
                     role: "system",
