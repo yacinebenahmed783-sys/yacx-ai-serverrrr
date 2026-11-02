@@ -33,7 +33,7 @@ app.get('/ping', (req, res) => {
     res.status(200).send('Server is Awake!');
 });
 
-// مسار الـ Chat المحدث ليعمل مباشرة مع نموذج جوجل وسرعته الخارقة
+// مسار الـ Chat المنظم والمستقر ليعمل مع نموذج جوجل بكل سلاسة
 app.post('/chat', async (req, res) => {
     try {
         const { message } = req.body;
@@ -66,19 +66,23 @@ app.post('/chat', async (req, res) => {
 
         response.data.on('data', (chunk) => {
             const chunkStr = chunk.toString();
-            try {
-                const lines = chunkStr.split('\n');
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        const jsonData = JSON.parse(line.substring(6));
-                        const textPart = jsonData.candidates?.[0]?.content?.parts?.[0]?.text;
-                        if (textPart) {
-                            res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: textPart } }] })}\n\n`);
+            const lines = chunkStr.split('\n');
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('data:')) {
+                    const jsonStr = trimmed.substring(5).trim();
+                    if (jsonStr && jsonStr !== '[DONE]') {
+                        try {
+                            const parsed = JSON.parse(jsonStr);
+                            const textPart = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+                            if (textPart) {
+                                res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: textPart } }] })}\n\n`);
+                            }
+                        } catch (e) {
+                            // تجاهل الحزم غير الكاملة
                         }
                     }
                 }
-            } catch (e) {
-                // تجاهل الحزم الفارغة
             }
         });
 
@@ -89,12 +93,13 @@ app.post('/chat', async (req, res) => {
 
     } catch (error) {
         console.error("Gemini Stream Error:", error.response?.data || error.message);
-        res.write('data: {"error": "حدث خطأ في الاتصال بسيرفر جوجل"}\n\n');
+        res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: "عذراً، حدث خطأ في الاتصال بسيرفر جوجل." } }] })}\n\n`);
+        res.write('data: [DONE]\n\n');
         res.end();
     }
 });
 
-// مسار الـ TTS المدعوم بكافة أصواتك ومعلمات الضبط الهادئ
+// مسار الـ TTS المدعوم بكافة أصواتك
 app.post("/api/tts", async (req, res) => {
     try {
         const { text, voice_id } = req.body;
@@ -119,10 +124,10 @@ app.post("/api/tts", async (req, res) => {
             data: {
                 text: text,
                 reference_id: targetVoiceId,
-                normalize: true,       // ضبط إيقاع القراءة
-                latency: 'normal',      // الأداء القياسي
-                temperature: 0.3,      // استقرار النبرة وتجنب التمخض
-                top_p: 0.7             // تباين مستقر ومنتظم
+                normalize: true,
+                latency: 'normal',
+                temperature: 0.3,
+                top_p: 0.7
             },
             responseType: 'arraybuffer'
         });
