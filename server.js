@@ -6,9 +6,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const API_KEY = process.env.OPENROUTER_API_KEY; 
-const MODEL = "cohere/north-mini-code:free"; 
-const URL = `https://openrouter.ai/api/v1/chat/completions`;
+// مفتاح جوجل الذي أضفته في Render
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY; 
+// رابط الاتصال المباشر بنموذج فلاش السريع من جوجل
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`;
 
 // إعدادات Fish Audio وقائمة معرفات الأصوات الخاصة بك بدقة
 const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-eCVCw5WT8B46HI-BHnczQMd7oT7GNUK4wsxw0B8hR1Q';
@@ -17,9 +18,9 @@ const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-eCVCw5WT8B46HI-BHnczQM
 const VOICE_MAP = {
     'personal': '7409fcf04906472db14cb0dd5a50ccb0', // صوتك الشخصي الأساسي
     'miku': 'fef2a33d77584832badf637d5e6b00c5',     // صوت ميكو
-    'mommy': '8e4e02d2503b448eb4d6a2efd99c84e3',    // mommy (المعرف الخاص بك)
+    'mommy': '8e4e02d2503b448eb4d6a2efd99c84e3',    // mommy
     'ahhh': '11413f183cf24e04859607efd14c832d',     // احححح
-    'child': '1d785d369dbf41589e421f4c72713629',    // بنت صغيرة (المعرف الخاص بك)
+    'child': '1d785d369dbf41589e421f4c72713629',    // بنت صغيرة
     'daddy': '44924e1147434a479e241309a75470e4',    // daddy
     'girl': '7eee0787bf1a476fb0864270853e344a',     // girl
     'memati': 'b8a16ccac9ad4bc78f5f3f5dd46dc6b5',   // ميماتي
@@ -32,6 +33,7 @@ app.get('/ping', (req, res) => {
     res.status(200).send('Server is Awake!');
 });
 
+// مسار الـ Chat المحدث ليعمل مباشرة مع نموذج جوجل وسرعته الخارقة
 app.post('/chat', async (req, res) => {
     try {
         const { message } = req.body;
@@ -40,44 +42,58 @@ app.post('/chat', async (req, res) => {
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
 
-        const response = await axios.post(URL, {
-            model: MODEL,
-            messages: [
-                {
-                    role: "system",
-                    content: `Instructions: أنت YacX، مساعد ذكي من تطوير ياسين.
+        const response = await axios.post(GEMINI_URL, {
+            system_instruction: {
+                parts: [{
+                    text: `Instructions: أنت YacX، مساعد ذكي من تطوير ياسين.
                     قواعد الرد:
                     1. إذا قال المستخدم "مرحباً" أو "أهلاً"، رد بترحيب طبيعي وودود ولا تذكر معلومات المطور فوراً.
                     2. إذا سألك المستخدم "من هو مطورك؟" أو "من صنعك؟"، أخبره فقط أنك من تطوير المبرمج ياسين، دون ذكر أي تفاصيل شخصية أخرى كالعمر، تاريخ الميلاد، أو مكان السكن لحماية الخصوصية.
                     3. كن تفاعلياً وذكياً في الشرح، ولا تكتفِ بالإجابات الجافة.`
-                },
-                { role: "user", content: message }
-            ],
-            stream: true
+                }]
+            },
+            contents: [{
+                role: "user",
+                parts: [{ text: message }]
+            }]
         }, {
             headers: {
-                "Authorization": `Bearer ${API_KEY}`,
                 "Content-Type": "application/json"
             },
             responseType: 'stream'
         });
 
         response.data.on('data', (chunk) => {
-            res.write(chunk);
+            const chunkStr = chunk.toString();
+            try {
+                const lines = chunkStr.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const jsonData = JSON.parse(line.substring(6));
+                        const textPart = jsonData.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (textPart) {
+                            res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: textPart } }] })}\n\n`);
+                        }
+                    }
+                }
+            } catch (e) {
+                // تجاهل الحزم الفارغة
+            }
         });
 
         response.data.on('end', () => {
+            res.write('data: [DONE]\n\n');
             res.end();
         });
 
     } catch (error) {
-        console.error("Stream Error:", error.message);
-        res.write('data: {"error": "حدث خطأ في الاتصال"}\n\n');
+        console.error("Gemini Stream Error:", error.response?.data || error.message);
+        res.write('data: {"error": "حدث خطأ في الاتصال بسيرفر جوجل"}\n\n');
         res.end();
     }
 });
 
-// مسار الـ TTS المدعوم بإعدادات التهدئة وتقليل التمديد الصوتي
+// مسار الـ TTS المدعوم بكافة أصواتك ومعلمات الضبط الهادئ
 app.post("/api/tts", async (req, res) => {
     try {
         const { text, voice_id } = req.body;
@@ -104,8 +120,8 @@ app.post("/api/tts", async (req, res) => {
                 reference_id: targetVoiceId,
                 normalize: true,       // ضبط إيقاع القراءة
                 latency: 'normal',      // الأداء القياسي
-                temperature: 0.3,      // تقليل الحماسة والتذبذب الصوتي الزائد
-                top_p: 0.7             // ضبط التباين ليصبح التحدث مستقراً
+                temperature: 0.3,      // استقرار النبرة وتجنب التمخض
+                top_p: 0.7             // تباين مستقر ومنتظم
             },
             responseType: 'arraybuffer'
         });
