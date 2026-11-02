@@ -42,7 +42,7 @@ app.post('/chat', async (req, res) => {
         }
 
         const response = await axios.post(GROQ_URL, {
-            model: "llama3-8b-8192", // تم تحديد النموذج هنا بدقة ليعمل بدون أخطاء
+            model: "llama-3.1-8b-instant", // تم تحديد النموذج هنا بدقة ليعمل بدون أخطاء
             messages: [
                 {
                     role: "system",
