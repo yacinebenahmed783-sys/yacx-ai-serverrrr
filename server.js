@@ -8,7 +8,7 @@ app.use(express.json());
 
 const API_KEY = process.env.OPENROUTER_API_KEY; 
 // تم تغيير النموذج إلى نموذج يدعم تحليل الصور (Vision)
-const MODEL = "google/gemini-2.0-flash-lite-preview-02-05:free"; 
+const MODEL = "google/gemini-flash-1.5:free";
 const URL = `https://openrouter.ai/api/v1/chat/completions`;
 
 // إعدادات Fish Audio وقائمة معرفات الأصوات المعتمدة
