@@ -7,7 +7,7 @@ app.use(cors());
 app.use(express.json());
 
 const API_KEY = process.env.OPENROUTER_API_KEY; 
-const MODEL = "cohere/north-mini-code:free"; // النموذج الأساسي السريع الخاص بك
+const MODEL = "cohere/north-mini-code:free"; // نموذج أوبن روتر الأساسي الخاص بك
 const URL = `https://openrouter.ai/api/v1/chat/completions`;
 
 // إعدادات Fish Audio وقائمة معرفات الأصوات المعتمدة
@@ -26,6 +26,7 @@ app.get('/ping', (req, res) => {
     res.status(200).send('Server is Awake!');
 });
 
+// مسار الدردشة والنصوص (أوبن روتر)
 app.post('/chat', async (req, res) => {
     try {
         const { message } = req.body;
@@ -74,7 +75,7 @@ app.post('/chat', async (req, res) => {
     }
 });
 
-// مسار الـ TTS
+// مسار الـ TTS (صوت Fish Audio)
 app.post("/api/tts", async (req, res) => {
     try {
         const { text, voice_id } = req.body;
@@ -105,7 +106,7 @@ app.post("/api/tts", async (req, res) => {
             'Content-Type': 'audio/mpeg',
             'Transfer-Encoding': 'chunked'
         });
-        res.send(source => res.send(response.data));
+        res.send(response.data);
 
     } catch (error) {
         console.error("TTS Error:", error.response?.data ? Buffer.from(error.response.data).toString() : error.message);
