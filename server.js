@@ -16,9 +16,9 @@ const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-eCVCw5WT8B46HI-BHnczQM
 // قاموس الأصوات
 const VOICE_MAP = {
     'personal': '7409fcf04906472db14cb0dd5a50ccb0', // صوتك الشخصي الأساسي
-    'miku': 'fef2a33d77584832badf637d5e6b00c5',  // صوت ميكو
+    'miku': 'fef2a33d77584832badf637d5e6b00c5',     // صوت ميكو
     'mommy': '5233336f5f44460ea0902b0802375451',    // mommy
-    'saddam': 'e222b3a8dc7d4afcb24c0827874a2960',
+    'saddam': 'e222b3a8dc7d4afcb24c0827874a2960',    // صوت صدام الواقعي
     'ahhh': '11413f183cf24e04859607efd14c832d',     // احححح
     'child': 'dbb776759f3b40d688ad282a50068d58'     // بنت صغيرة
 };
@@ -76,7 +76,7 @@ app.post('/chat', async (req, res) => {
     }
 });
 
-// مسار الـ TTS (صوت Fish Audio)
+// مسار الـ TTS (صوت Fish Audio مع ضبط الدقة والنبرة الواقعية)
 app.post("/api/tts", async (req, res) => {
     try {
         const { text, voice_id } = req.body;
@@ -97,8 +97,8 @@ app.post("/api/tts", async (req, res) => {
                 reference_id: targetVoiceId,
                 normalize: true,
                 latency: 'normal',
-                temperature: 0.3,
-                top_p: 0.7
+                temperature: 0.35, // ضبطت خصيصاً لتطابق النبرة الواقعية المتقنة
+                top_p: 0.85        // للحفاظ على نقاء وثبات الصوت تماماً مثل المنصة
             },
             responseType: 'arraybuffer'
         });
