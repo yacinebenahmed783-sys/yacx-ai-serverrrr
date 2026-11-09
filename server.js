@@ -20,7 +20,7 @@ const VOICE_MAP = {
     'mommy': '8e4e02d2503b448eb4d6a2efd99c84e3',    // mommy
     'ahhh': '1d785d369dbf41589e421f4c72713629',     // اححح
     'child': 'dbb776759f3b40d688ad282a50068d58',    // بنت صغيرة
-    'daddy': '44924e1147434a479e241309a75470e4',    // Daddy
+    'daddy': 'a02d16b68013480fa1ab465427f35b30',    // Daddy
     'girl': '7eee0787bf1a476fb0864270853e344a',     // Girl
     'memati': 'b8a16ccac9ad4bc78f5f3f5dd46dc6b5',   // ميماتي
     'aboflah': '7e4fa512aa564e198f8659b466f6ff70',  // أبو فلة
