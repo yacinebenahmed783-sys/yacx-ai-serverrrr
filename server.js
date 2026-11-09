@@ -12,27 +12,27 @@ const URL = `https://openrouter.ai/api/v1/chat/completions`;
 
 const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-eCVCw5WT8B46HI-BHnczQMd7oT7GNUK4wsxw0B8hR1Q';
 
-// قاموس الأصوات الشامل الأساسي
+// قاموس الأصوات الأساسي
 const VOICE_MAP = {
-    'personal': '7409fcf04906472db14cb0dd5a50ccb0', // بنت صايعة
-    'saddam': 'e222b3a8dc7d4afcb24c0827874a2960',    // صوت صدام الواقعي
-    'miku': 'fef2a33d77584832badf637d5e6b00c5',     // ميكو
-    'mommy': '8e4e02d2503b448eb4d6a2efd99c84e3',    // mommy
-    'ahhh': '1d785d369dbf41589e421f4c72713629',     // اححح
-    'child': 'dbb776759f3b40d688ad282a50068d58',    // بنت صغيرة
-    'daddy': 'a02d16b68013480fa1ab465427f35b30',    // Daddy
-    'girl': '7eee0787bf1a476fb0864270853e344a',     // Girl
-    'memati': 'b8a16ccac9ad4bc78f5f3f5dd46dc6b5',   // ميماتي
-    'aboflah': '7e4fa512aa564e198f8659b466f6ff70',  // أبو فلة
-    'tebboune': '207bf4478cfc456e8823de046272044b', // تبون
-    'gumball': '1d51fdd65ff14342aec4dffa0ef58386'   // غامبول
+    'personal': '7409fcf04906472db14cb0dd5a50ccb0', 
+    'saddam': 'e222b3a8dc7d4afcb24c0827874a2960',    
+    'miku': 'fef2a33d77584832badf637d5e6b00c5',     
+    'mommy': '8e4e02d2503b448eb4d6a2efd99c84e3',    
+    'ahhh': '1d785d369dbf41589e421f4c72713629',     
+    'child': 'dbb776759f3b40d688ad282a50068d58',    
+    'daddy': 'a02d16b68013480fa1ab465427f35b30',    
+    'girl': '7eee0787bf1a476fb0864270853e344a',     
+    'memati': 'b8a16ccac9ad4bc78f5f3f5dd46dc6b5',   
+    'aboflah': '7e4fa512aa564e198f8659b466f6ff70',  
+    'tebboune': '207bf4478cfc456e8823de046272044b', 
+    'gumball': '1d51fdd65ff14342aec4dffa0ef58386'   
 };
 
 app.get('/ping', (req, res) => {
     res.status(200).send('Server is Awake!');
 });
 
-// مسار البحث والفلترة المتقدم للأصوات عبر Fish Audio
+// مسار البحث المباشر في أصوات Fish Audio العامة
 app.get('/api/voices/search', async (req, res) => {
     try {
         const query = req.query.q || '';
@@ -74,7 +74,7 @@ app.post('/chat', async (req, res) => {
                     role: "system",
                     content: `أنت YacX، مساعد ذكي ومفيد من تطوير المبرمج ياسين.
 التعليمات الأساسية:
-1. رد دائماً بنفس اللغة التي يكتب بها المستخدم تماماً (إذا كتب بالعربية رد بالعربية فقط وبدون خلط لغات).
+1. رد دائماً بنفس اللغة التي yكتب بها المستخدم تماماً (إذا كتب بالعربية رد بالعربية فقط وبدون خلط لغات).
 2. احرص بشدة على صحة الإملاء، وترك مسافات واضحة وصحيحة بين الكلمات وعدم إلساقها ببعضها أبداً.
 3. قدم إجابات مرتبطة، نظيفة، وذات فقرات واضحة وبدون رسم جداول نصية نهائياً.
 4. قاعدة الملك: إذا أخبرك المستخدم "أنا ياسين"، اسأله مباشرة وبدون تدخلات: "إذا كنت أنت حقاً ياسين، فما هي شخصيتك المفضلة؟".
@@ -112,11 +112,7 @@ app.post("/api/tts", async (req, res) => {
         const { text, voice_id } = req.body;
         if (!text) return res.status(400).json({ error: "النص مطلوب" });
 
-        // التحقق مما إذا كان المعرف موجوداً في القاموس أو ممرراً مباشرة من البحث
-        let targetVoiceId = voice_id;
-        if (!targetVoiceId) {
-            targetVoiceId = VOICE_MAP['personal'];
-        }
+        let targetVoiceId = voice_id || VOICE_MAP['personal'];
 
         const response = await axios({
             method: 'post',
