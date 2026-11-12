@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-const multer = require('multer'); // لاستقبال الملفات الصوتية المرسلة من الواجهة
+const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
@@ -14,7 +14,7 @@ const URL = `https://openrouter.ai/api/v1/chat/completions`;
 
 const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-eCVCw5WT8B46HI-BHnczQMd7oT7GNUK4wsxw0B8hR1Q';
 
-// قاموس الأصوات
+// قاموس الأصوات الثابتة
 const VOICE_MAP = {
     'personal': '7409fcf04906472db14cb0dd5a50ccb0', 
     'saddam': 'e222b3a8dc7d4afcb24c0827874a2960',    
@@ -42,13 +42,13 @@ app.post('/api/voice-changer', upload.single('audio'), async (req, res) => {
             return res.status(400).json({ error: "الملف الصوتي مطلوب" });
         }
 
-        // إرسال الملف الصوتي إلى نقطة تحويل الصوت في Fish Audio
         const response = await axios({
             method: 'post',
-            url: 'https://api.fish.audio/v1/voice-changer', // مسار الـ Speech-to-Speech
+            url: `https://api.fish.audio/v1/voice-changer`,
             headers: {
                 'Authorization': `Bearer ${FISH_API_KEY}`,
-                'Content-Type': 'application/octet-Stream'
+                'Content-Type': req.file.mimetype || 'audio/webm',
+                'model': 's2.1-pro-free'
             },
             data: req.file.buffer,
             params: {
