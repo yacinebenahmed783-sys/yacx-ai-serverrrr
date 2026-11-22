@@ -22,6 +22,7 @@ const VOICE_MAP = {
     'saddam': 'e222b3a8dc7d4afcb24c0827874a2960',
     'miku': 'fef2a33d77584832badf637d5e6b00c5',
     'mommy': '8e4e02d2503b448eb4d6a2efd99c84e3',
+    'Yui hirasawa': 'dbb7d501cb154cf19287437e05326de4',
     'ahhh': '1d785d369dbf41589e421f4c72713629',
     'child': 'dbb776759f3b40d688ad282a50068d58',
     'daddy': 'a02d16b68013480fa1ab465427f35b30',
