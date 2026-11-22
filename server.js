@@ -38,17 +38,21 @@ function formatErrorData(err) {
     return String(data);
 }
 
-// تنظيف النص وتقسيمه إلى مقاطع قصيرة واضحة للنطق العربي
-function prepareArabicChunks(rawText, maxLen = 180) {
+// تنظيف النص وتقسيمه إلى مقاطع بانسيابية قريبة من التوليد المباشر
+function prepareArabicChunks(rawText, maxLen = 320) {
     const cleaned = String(rawText)
-        .replace(/[^\u0600-\u06FF\u0750-\u077F\u08A0-\u08FFa-zA-Z0-9\s،.!?؟؛:()\-]/g, ' ')
+        .replace(/[^\u0600-\u06FF\u0750-\u077F\u08A0-\u08FFa-zA-Z0-9\s،.!?؟؛:()\-_[\]]/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
 
     if (!cleaned) return [];
 
-    // تقسيم مبدئي حسب علامات الوقف
-    const parts = cleaned.match(/[^.!?؟،؛\n]+[.!?؟،؛]?/g) || [cleaned];
+    if (cleaned.length <= maxLen) {
+        return [cleaned];
+    }
+
+    // تقسيم حسب نهايات الجمل الكبيرة أولاً لتقليل التقطيع بين العبارات المترابطة
+    const parts = cleaned.match(/[^.!?؟\n]+[.!?؟]?/g) || [cleaned];
     const chunks = [];
 
     for (const part of parts) {
@@ -58,7 +62,6 @@ function prepareArabicChunks(rawText, maxLen = 180) {
         if (piece.length <= maxLen) {
             chunks.push(piece);
         } else {
-            // تقسيم الجملة الطويلة حسب الكلمات دون قطع الكلمة في المنتصف
             const words = piece.split(/\s+/);
             let current = '';
             for (const word of words) {
@@ -91,8 +94,8 @@ async function synthesizeChunk(text, targetVoiceId) {
             model: 's2.1-pro-free',
             normalize: true,
             latency: 'normal',
-            temperature: 0.3,
-            top_p: 0.85,
+            temperature: 0.45,
+            top_p: 0.9,
             format: 'mp3'
         },
         responseType: 'arraybuffer',
