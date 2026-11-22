@@ -27,6 +27,17 @@ const VOICE_MAP = {
     'gumball': '1d51fdd65ff14342aec4dffa0ef58386'
 };
 
+function formatErrorData(err) {
+    const data = err?.response?.data;
+    if (!data) return err?.message || 'Unknown error';
+    if (Buffer.isBuffer(data)) return data.toString('utf8');
+    if (typeof data === 'object' && typeof data.on === 'function') {
+        return `Stream Error (${err?.response?.status || 'no-status'}): ${err?.message || ''}`;
+    }
+    if (typeof data === 'object') return JSON.stringify(data);
+    return String(data);
+}
+
 // تنظيف النص وتقسيمه إلى مقاطع قصيرة واضحة للنطق العربي
 function prepareArabicChunks(rawText, maxLen = 180) {
     const cleaned = String(rawText)
@@ -121,7 +132,13 @@ app.post('/chat', async (req, res) => {
 
         response.data.on('data', (chunk) => res.write(chunk));
         response.data.on('end', () => res.end());
+        response.data.on('error', (streamErr) => {
+            console.error("Chat Stream Error:", streamErr?.message || streamErr);
+            res.write('data: {"error": "حدث خطأ في الاتصال"}\n\n');
+            res.end();
+        });
     } catch (error) {
+        console.error("Chat Error:", formatErrorData(error));
         res.write('data: {"error": "حدث خطأ في الاتصال"}\n\n');
         res.end();
     }
@@ -153,7 +170,7 @@ app.post("/api/tts", async (req, res) => {
         });
         res.send(finalAudio);
     } catch (error) {
-        console.error("TTS Error:", error?.response?.data || error.message);
+        console.error("TTS Error:", formatErrorData(error));
         res.status(500).json({ error: "حدث خطأ أثناء توليد الصوت" });
     }
 });
