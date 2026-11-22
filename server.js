@@ -11,8 +11,6 @@ const MODEL = "cohere/north-mini-code:free";
 const URL = `https://openrouter.ai/api/v1/chat/completions`;
 
 const FISH_API_KEY = process.env.FISH_API_KEY;
-// يحاول أولاً استخدام الموديل المحدد في الصورة، وإذا لم يضبط يرجع تلقائياً بدون model
-const PREFERRED_FISH_MODEL = process.env.FISH_TTS_MODEL || 'Fish Audio Drama 3';
 
 // قاموس الأصوات (بنت صايعة أولاً، صدام حسين ثانياً، وبقية الأصوات بدون ألقاب)
 const VOICE_MAP = {
@@ -38,6 +36,7 @@ function prepareArabicChunks(rawText, maxLen = 180) {
 
     if (!cleaned) return [];
 
+    // تقسيم مبدئي حسب علامات الوقف
     const parts = cleaned.match(/[^.!?؟،؛\n]+[.!?؟،؛]?/g) || [cleaned];
     const chunks = [];
 
@@ -48,6 +47,7 @@ function prepareArabicChunks(rawText, maxLen = 180) {
         if (piece.length <= maxLen) {
             chunks.push(piece);
         } else {
+            // تقسيم الجملة الطويلة حسب الكلمات دون قطع الكلمة في المنتصف
             const words = piece.split(/\s+/);
             let current = '';
             for (const word of words) {
@@ -65,7 +65,7 @@ function prepareArabicChunks(rawText, maxLen = 180) {
     return chunks;
 }
 
-async function sendFishRequest(dataPayload) {
+async function synthesizeChunk(text, targetVoiceId) {
     const response = await axios({
         method: 'post',
         url: 'https://api.fish.audio/v1/tts',
@@ -73,41 +73,21 @@ async function sendFishRequest(dataPayload) {
             'Authorization': `Bearer ${FISH_API_KEY}`,
             'Content-Type': 'application/json'
         },
-        data: dataPayload,
+        data: {
+            text,
+            reference_id: targetVoiceId,
+            model: 's2.1-pro-free',
+            normalize: true,
+            latency: 'normal',
+            temperature: 0.3,
+            top_p: 0.85,
+            format: 'mp3'
+        },
         responseType: 'arraybuffer',
         timeout: 30000
     });
 
     return Buffer.from(response.data);
-}
-
-async function synthesizeChunk(text, targetVoiceId) {
-    const basePayload = {
-        text,
-        reference_id: targetVoiceId,
-        normalize: true,
-        latency: 'normal',
-        temperature: 0.3,
-        top_p: 0.85,
-        format: 'mp3'
-    };
-
-    if (PREFERRED_FISH_MODEL) {
-        try {
-            return await sendFishRequest({
-                ...basePayload,
-                model: PREFERRED_FISH_MODEL
-            });
-        } catch (err) {
-            console.warn(
-                `Model "${PREFERRED_FISH_MODEL}" failed or rejected, falling back to default model:`,
-                err?.response?.status || err.message
-            );
-        }
-    }
-
-    // المحاولة الحرة بدون تحديد model ليختار Fish Audio تلقائياً
-    return await sendFishRequest(basePayload);
 }
 
 app.get('/ping', (req, res) => {
@@ -180,4 +160,3 @@ app.post("/api/tts", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
