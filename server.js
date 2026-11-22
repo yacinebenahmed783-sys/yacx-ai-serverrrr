@@ -10,7 +10,7 @@ const API_KEY = process.env.OPENROUTER_API_KEY;
 const MODEL = "cohere/north-mini-code:free";
 const URL = `https://openrouter.ai/api/v1/chat/completions`;
 
-const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-eCVCw5WT8B46HI-BHnczQMd7oT7GNUK4wsxw0B8hR1Q';
+const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-Mz4VAGGAWvn6bbSdG0tddMmlU_IG4WtaUdjkDYQX3FE';
 
 // قاموس الأصوات (بنت صايعة أولاً، صدام حسين ثانياً، وبقية الأصوات بدون ألقاب)
 const VOICE_MAP = {
