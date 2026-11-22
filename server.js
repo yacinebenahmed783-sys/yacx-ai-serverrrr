@@ -7,7 +7,11 @@ app.use(cors());
 app.use(express.json());
 
 const API_KEY = process.env.OPENROUTER_API_KEY;
-const MODEL = "cohere/north-mini-code:free";
+const MODEL = process.env.OPENROUTER_MODEL || "cohere/north-mini-code:free";
+const FALLBACK_MODELS = [
+    process.env.OPENROUTER_FALLBACK_MODEL,
+    "openrouter/free"
+].filter(Boolean);
 const URL = `https://openrouter.ai/api/v1/chat/completions`;
 
 const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-Mz4VAGGAWvn6bbSdG0tddMmlU_IG4WtaUdjkDYQX3FE';
@@ -36,6 +40,27 @@ function formatErrorData(err) {
     }
     if (typeof data === 'object') return JSON.stringify(data);
     return String(data);
+}
+
+async function openChatStream(modelName, message) {
+    return axios.post(URL, {
+        model: modelName,
+        messages: [
+            {
+                role: "system",
+                content: `أنت YacX، مساعد ذكي ومفيد من تطوير المبرمج ياسين. رد دائماً بنفس اللغة التي يكتب بها المستخدم بدقة.`
+            },
+            { role: "user", content: message || "مرحباً" }
+        ],
+        stream: true
+    }, {
+        headers: {
+            "Authorization": `Bearer ${API_KEY}`,
+            "Content-Type": "application/json"
+        },
+        responseType: 'stream',
+        timeout: 30000
+    });
 }
 
 // تنظيف النص وتقسيمه إلى مقاطع بانسيابية قريبة من التوليد المباشر
@@ -116,23 +141,26 @@ app.post('/chat', async (req, res) => {
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
 
-        const response = await axios.post(URL, {
-            model: MODEL,
-            messages: [
-                {
-                    role: "system",
-                    content: `أنت YacX، مساعد ذكي ومفيد من تطوير المبرمج ياسين. رد دائماً بنفس اللغة التي يكتب بها المستخدم بدقة.`
-                },
-                { role: "user", content: message || "مرحباً" }
-            ],
-            stream: true
-        }, {
-            headers: {
-                "Authorization": `Bearer ${API_KEY}`,
-                "Content-Type": "application/json"
-            },
-            responseType: 'stream'
-        });
+        const candidateModels = [MODEL, ...FALLBACK_MODELS.filter((m) => m !== MODEL)];
+        let response = null;
+        let lastError = null;
+
+        for (const candidate of candidateModels) {
+            try {
+                response = await openChatStream(candidate, message);
+                if (candidate !== MODEL) {
+                    console.log(`Chat fallback active using model: ${candidate}`);
+                }
+                break;
+            } catch (err) {
+                lastError = err;
+                console.error(`Chat Error (${candidate}):`, formatErrorData(err));
+            }
+        }
+
+        if (!response) {
+            throw lastError || new Error("All chat models failed");
+        }
 
         response.data.on('data', (chunk) => res.write(chunk));
         response.data.on('end', () => res.end());
