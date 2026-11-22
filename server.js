@@ -97,6 +97,11 @@ app.get('/ping', (req, res) => {
 app.post('/chat', async (req, res) => {
     try {
         const { message } = req.body;
+
+        if (!API_KEY) {
+            return res.status(500).json({ error: "OPENROUTER_API_KEY غير مضبوط في السيرفر" });
+        }
+
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
@@ -114,16 +119,41 @@ app.post('/chat', async (req, res) => {
         }, {
             headers: {
                 "Authorization": `Bearer ${API_KEY}`,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://yacx.vercel.app",
+                "X-Title": "YacX.AI"
             },
-            responseType: 'stream'
+            responseType: 'stream',
+            timeout: 45000
         });
 
-        response.data.on('data', (chunk) => res.write(chunk));
-        response.data.on('end', () => res.end());
+        response.data.on('data', (chunk) => {
+            res.write(chunk);
+        });
+
+        response.data.on('end', () => {
+            res.end();
+        });
+
+        response.data.on('error', (streamErr) => {
+            console.error("Chat Stream Error:", streamErr.message);
+            res.write(`data: ${JSON.stringify({ error: "انقطع بث الرد من السيرفر" })}\n\n`);
+            res.end();
+        });
     } catch (error) {
-        res.write('data: {"error": "حدث خطأ في الاتصال"}\n\n');
-        res.end();
+        const errDetail = error?.response?.data
+            ? Buffer.isBuffer(error.response.data)
+                ? error.response.data.toString('utf8')
+                : JSON.stringify(error.response.data)
+            : error.message;
+        console.error("Chat Error:", errDetail);
+
+        if (!res.headersSent) {
+            res.status(500).json({ error: "حدث خطأ في الاتصال بالشات" });
+        } else {
+            res.write(`data: ${JSON.stringify({ error: "حدث خطأ في الاتصال" })}\n\n`);
+            res.end();
+        }
     }
 });
 
