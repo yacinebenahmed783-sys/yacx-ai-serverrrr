@@ -82,7 +82,8 @@ async function synthesizeChunk(text, targetVoiceId) {
         url: 'https://api.fish.audio/v1/tts',
         headers: {
             'Authorization': `Bearer ${FISH_API_KEY}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'model': 's2.1-pro-free'
         },
         data: {
             text,
