@@ -15,6 +15,8 @@ const FALLBACK_MODELS = [
 const URL = `https://openrouter.ai/api/v1/chat/completions`;
 
 const FISH_API_KEY = process.env.FISH_API_KEY || 'sk-fish-Mz4VAGGAWvn6bbSdG0tddMmlU_IG4WtaUdjkDYQX3FE';
+const KEEP_ALIVE_URL = process.env.KEEP_ALIVE_URL || process.env.RENDER_EXTERNAL_URL || 'https://yacx-ai-serverrrr.onrender.com';
+const KEEP_ALIVE_INTERVAL_MS = Number(process.env.KEEP_ALIVE_INTERVAL_MS) || 10 * 60 * 1000;
 
 // قاموس الأصوات (بنت صايعة أولاً، صدام حسين ثانياً، وبقية الأصوات بدون ألقاب)
 const VOICE_MAP = {
@@ -131,6 +133,21 @@ async function synthesizeChunk(text, targetVoiceId) {
     return Buffer.from(response.data);
 }
 
+function startKeepAlive() {
+    const baseUrl = String(KEEP_ALIVE_URL || '').replace(/\/+$/, '');
+    if (!baseUrl) return;
+
+    const pingTarget = `${baseUrl}/ping`;
+    setInterval(async () => {
+        try {
+            await axios.get(pingTarget, { timeout: 15000 });
+            console.log(`[Keep-Alive] Pinged ${pingTarget}`);
+        } catch (err) {
+            console.error(`[Keep-Alive] Failed ping to ${pingTarget}:`, err?.message || err);
+        }
+    }, KEEP_ALIVE_INTERVAL_MS);
+}
+
 app.get('/ping', (req, res) => {
     res.status(200).send('Server is Awake!');
 });
@@ -209,4 +226,7 @@ app.post("/api/tts", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    startKeepAlive();
+});
